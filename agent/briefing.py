@@ -66,7 +66,8 @@ def build_item_list(rows) -> str:
             f"    Outlet: {r['outlet']} | Published: {(r['published_at'] or '')[:16]}\n"
             f"    Headline: {r['title']}\n"
             f"    Summary: {(r['summary'] or '')[:300]}\n"
-            f"    Classifier note (machine-generated, for context only, do not quote or attribute): {r['justification']}")    return "\n\n".join(lines)
+            f"    Classifier note (machine-generated, for context only, do not quote or attribute): {r['justification']}")
+    return "\n\n".join(lines)
 
 def check_citations(markdown: str, n_items: int) -> dict:
     """Every [n] in the text must be in 1..n_items. Anything else is a hallucinated citation."""
