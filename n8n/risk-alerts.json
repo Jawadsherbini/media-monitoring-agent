@@ -1,0 +1,243 @@
+{
+  "name": "Risk alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "96164946-12e4-42db-b121-f49f42b3ca03",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/ingest",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "73bbb646-eba7-403e-b936-1269425f62bd",
+      "name": "Ingest",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oc5snoiJXvKwYZff",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/classify?limit=100",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "ddfeaa3a-d241-459d-aa7a-af897ac87e20",
+      "name": "Classify",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oc5snoiJXvKwYZff",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:8000/alerts/pending",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        0
+      ],
+      "id": "907adae6-96c7-462a-a811-02f8fdb66324",
+      "name": "Pending alerts",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oc5snoiJXvKwYZff",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Turn the list of high-risk articles into ONE message (never one email per article)\nconst items = $input.all().map(i => i.json);\nif (items.length === 0) return [];      // nothing pending → workflow stops here\n\nconst lines = items.map(a =>\n  `• [${a.theme}] ${a.title}\\n  ${a.outlet} — ${a.published_at}\\n  Why flagged: ${a.justification}\\n  ${a.link}`\n);\n\nreturn [{ json: {\n  count: items.length,\n  ids: items.map(a => a.id),\n  subject: `High-risk media alert: ${items.length} item(s)`,\n  text: `The media monitoring agent flagged ${items.length} high-risk item(s).\\n\\n${lines.join(\"\\n\\n\")}\\n\\nThese were detected within the last monitoring cycle (≤10 min).`\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "b871ad2f-c560-44da-a6ab-cc3aafae2d3c",
+      "name": "Compose alert"
+    },
+    {
+      "parameters": {
+        "fromEmail": "agent@directorate.example",
+        "toEmail": "analyst@directorate.example",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "0c8442e8-701b-4f34-acdb-6ac0a896c1bd",
+      "name": "Send an Email",
+      "webhookId": "906a8273-183d-4777-bf7f-1c2c32c74b56",
+      "credentials": {
+        "smtp": {
+          "id": "7vArrjWXPPjYpuPv",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/alerts/ack",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ ids: $('Compose alert').item.json.ids }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "dd927e17-abf6-45e9-80e1-292e3a0c553b",
+      "name": "Acknowledge",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oc5snoiJXvKwYZff",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Ingest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ingest": {
+      "main": [
+        [
+          {
+            "node": "Classify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify": {
+      "main": [
+        [
+          {
+            "node": "Pending alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pending alerts": {
+      "main": [
+        [
+          {
+            "node": "Compose alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose alert": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an Email": {
+      "main": [
+        [
+          {
+            "node": "Acknowledge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "32a80e6d-122d-4aae-b4c3-532503eec12d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f7756d6c1eac3ea049b23df09cc9e253c00a4c510589e6c5007d037ec52ceed3"
+  },
+  "nodeGroups": [],
+  "id": "DyAF5jGA14W6RUwu",
+  "tags": []
+}
