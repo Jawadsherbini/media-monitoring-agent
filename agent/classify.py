@@ -37,7 +37,8 @@ def classify_article(outlet: str, title: str, summary: str) -> dict:
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_msg}],
     )
-    text = resp.content[0].text.strip().strip("`").removeprefix("json").strip()
+    text = "".join(b.text for b in resp.content if b.type == "text")
+    text = text.strip().strip("`").removeprefix("json").strip()
     result = json.loads(text)
     if result.get("theme") not in THEMES:          # guard against made-up labels
         result["theme"] = "not_relevant"
