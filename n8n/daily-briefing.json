@@ -1,0 +1,321 @@
+{
+  "name": "Daily briefing",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1618a277-37da-4555-b9e7-72b3ae853350",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/pipeline/daily?since_hours=72",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 900000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "28b82666-6926-4ac8-91a9-03de41c15ba0",
+      "name": "Run pipeline",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oc5snoiJXvKwYZff",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pull the pieces n8n needs out of the pipeline result and build the review summary\nconst r = $input.first().json;\nconst b = r.briefing;\n\nconst warnings = [];\nif (b.truncated) warnings.push(\"Draft was cut short by the length limit — later sections may be missing.\");\nif (b.citation_check.invalid.length) warnings.push(`Citations not matching any source: ${b.citation_check.invalid.join(\", \")}`);\nif (r.ingest.failed_feeds.length) warnings.push(`Sources unavailable this run: ${r.ingest.failed_feeds.join(\"; \")}`);\n\nreturn [{ json: {\n  briefing_id: b.briefing_id,\n  markdown: b.markdown,\n  article_count: b.articles,\n  warnings,\n  summary_line: `${b.articles} relevant items · ${r.ingest.new} new articles ingested · ${r.classify.classified} newly classified · ${warnings.length} warning(s)`\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "a6668a9d-135a-4395-b927-4f95f7348e5b",
+      "name": "Prepare draft"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "fromEmail": "analyst@directorate.example",
+        "toEmail": "analyst@directorate.example",
+        "subject": "=Draft briefing #{{ $json.briefing_id }} — approval needed ({{ $json.article_count }} items)",
+        "message": "={{ `REVIEW SUMMARY: ${$json.summary_line}\\n\\n${$json.warnings.length ? \"WARNINGS:\\n- \" + $json.warnings.join(\"\\n- \") + \"\\n\\n\" : \"No warnings.\\n\\n\"}Open the form below to approve or reject.\\n\\n----------------------------------------\\n\\n${$json.markdown}` }}",
+        "responseType": "customForm",
+        "defineForm": "json",
+        "jsonOutput": "[\n  {\n    \"fieldLabel\": \"Decision\",\n    \"fieldType\": \"dropdown\",\n    \"fieldOptions\": { \"values\": [ { \"option\": \"approved\" }, { \"option\": \"rejected\" } ] },\n    \"requiredField\": true\n  },\n  {\n    \"fieldLabel\": \"Reviewer\",\n    \"fieldType\": \"text\",\n    \"placeholder\": \"Your name\",\n    \"requiredField\": true\n  },\n  {\n    \"fieldLabel\": \"Notes\",\n    \"fieldType\": \"textarea\",\n    \"placeholder\": \"Corrections or comments (optional)\",\n    \"requiredField\": false\n  }\n]",
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "resumeAmount": 2
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "1483374e-de6e-418e-a6a8-b227501f8eb5",
+      "name": "Request approval",
+      "webhookId": "6efc0e37-fa65-4c89-bb4e-2e9758c1493f",
+      "credentials": {
+        "smtp": {
+          "id": "7vArrjWXPPjYpuPv",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://127.0.0.1:8000/briefing/{{ $('Prepare draft').item.json.briefing_id }}/review",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ decision: $json.data.Decision, reviewer: $json.data.Reviewer, notes: $json.data.Notes || \"\" }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        0
+      ],
+      "id": "7bb1e777-b9ee-4b4f-837c-308327ec40ac",
+      "name": "Record review",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oc5snoiJXvKwYZff",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "385ccdd2-3186-4c9f-8339-2546b551b36b",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "66dca6dc-2cd4-4913-abc2-4cf1967965d4",
+      "name": "Approved?"
+    },
+    {
+      "parameters": {
+        "mode": "markdownToHtml",
+        "markdown": "={{ $('Prepare draft').item.json.markdown }}",
+        "destinationKey": "html",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        -128
+      ],
+      "id": "b98caeb2-802a-4b24-a918-4d7792324e06",
+      "name": "Markdown to HTML"
+    },
+    {
+      "parameters": {
+        "fromEmail": "analyst@directorate.example ",
+        "toEmail": "dg-office@directorate.example ",
+        "subject": "=Daily Media Briefing — approved by {{ $('Record review').item.json.reviewed_by }}",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1552,
+        -128
+      ],
+      "id": "ac4a49c7-2c54-4106-ac57-712b04a1a2e4",
+      "name": "Deliver to DG",
+      "webhookId": "23e49d93-1e5c-4804-834e-586076cda973",
+      "credentials": {
+        "smtp": {
+          "id": "7vArrjWXPPjYpuPv",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "analyst@directorate.example",
+        "toEmail": "analyst@directorate.example",
+        "subject": "=Briefing #{{ $('Prepare draft').item.json.briefing_id }} rejected — nothing sent to DG",
+        "emailFormat": "text",
+        "text": "=Rejected by {{ $('Record review').item.json.reviewed_by }} at {{ $('Record review').item.json.reviewed_at }}.\nNo briefing was delivered. Regenerate or edit before the next cycle.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1344,
+        96
+      ],
+      "id": "deb7e683-cef7-4aef-b088-b24eba60465e",
+      "name": "Notify rejection",
+      "webhookId": "7e0618cd-ed5c-4fb6-a6e0-8175abb08319",
+      "credentials": {
+        "smtp": {
+          "id": "7vArrjWXPPjYpuPv",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Run pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run pipeline": {
+      "main": [
+        [
+          {
+            "node": "Prepare draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare draft": {
+      "main": [
+        [
+          {
+            "node": "Request approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request approval": {
+      "main": [
+        [
+          {
+            "node": "Record review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record review": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Markdown to HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify rejection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown to HTML": {
+      "main": [
+        [
+          {
+            "node": "Deliver to DG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "8dc42513-7a66-425f-85a2-b86d4ed2e850",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f7756d6c1eac3ea049b23df09cc9e253c00a4c510589e6c5007d037ec52ceed3"
+  },
+  "nodeGroups": [],
+  "id": "dzVn7rINDzLX6BSj",
+  "tags": []
+}
