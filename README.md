@@ -54,6 +54,7 @@ Then n8n, in a second terminal (first start downloads n8n, ≈3 min):
 
 ```bash
 npx n8n            # open http://localhost:5678 and create the local owner account
+# Safari users: start with  N8N_SECURE_COOKIE=false npx n8n  (local-only prototype; production uses HTTPS)
 ```
 
 In n8n:
@@ -70,6 +71,19 @@ In n8n:
 5. Open **Risk alerts** → **Execute workflow**. Pending high-risk items arrive as one email.
 
 Set each workflow's timezone (⋯ → Settings) to `Asia/Riyadh` before publishing the schedules.
+
+## What it looks like
+
+| Daily briefing workflow (approved run) | Risk alerts workflow |
+|---|---|
+| ![](docs/screenshots/n8n-daily-briefing.png) | ![](docs/screenshots/n8n-risk-alerts.png) |
+
+| Draft sent to the analyst | Approval form | Approved briefing in the DG inbox |
+|---|---|---|
+| ![](docs/screenshots/email-approval.png) | ![](docs/screenshots/approval-form.png) | ![](docs/screenshots/email-dg.png) |
+
+Full outputs: [a complete generated briefing](docs/sample-briefing.md) (65 items, every citation
+verified) and [two archive Q&A answers](docs/sample-qa.md).
 
 ## Ask the archive (requirement 6, simplest form)
 
@@ -161,6 +175,10 @@ Plus a small VM for n8n inside the client's network. Re-measure with `python -m 
   SQL, so moving to Postgres is a small change.
 - **No agent framework.** Plain functions calling the LLM, orchestrated by n8n. Every step is
   readable and testable on its own.
+- **Anthropic Claude**, chosen for instruction-following on citations, two price tiers behind one
+  SDK, and a regional-hosting path; see the provider comparison in `docs/architecture.md`.
+  `agent/llm.py` is the single swap point; a client-selectable provider and extra delivery
+  channels (Teams, Slack, WhatsApp) are listed as next steps.
 
 ## Known limitations
 
