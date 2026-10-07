@@ -117,14 +117,19 @@ length limit is flagged. Both warnings appear at the top of the draft the analys
 
 ## Cost at 1,500 items/day
 
-| Step | Model | Monthly tokens (measured) | Monthly cost |
+| Step | Model | Monthly tokens | Monthly cost |
 |---|---|---|---|
 | Classification | Claude Haiku 4.5 ($1 / $5 per M) | ~17.9M in, ~2.7M out | ≈ $31.4 |
 | Daily briefing | Claude Sonnet 5.5 ($2 / $10 per M) | ~0.4M in, ~0.1M out | ≈ $2 |
 | Alerts | reuse classification | — | $0 |
 | **LLM total** | | | **≈ $33.4 / month** |
 
-Prompt caching on the fixed classification prompt would cut the largest line to roughly $8.
+Classification row measured with `eval/measure_tokens.py` (10-call average). Briefing row
+estimated from one measured run (3,624 in / 2,766 out for 15 items) scaled to the 80-item cap.
+
+Prompt caching on the fixed classification prompt (about 350 of the 397 input tokens are
+identical every call) would cut the classification line to roughly $17: cached input reads
+cost $0.10 per million instead of $1, while output cost is unchanged.
 Plus a small VM for n8n inside the client's network. Re-measure with `python -m eval.measure_tokens`.
 
 ## Scope decisions

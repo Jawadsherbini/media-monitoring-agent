@@ -57,7 +57,7 @@ every 10 min  Schedule ──► ingest ──► classify ──► pending hig
 
 ## Cost (1,500 items/day)
 
-≈ $38/month in LLM calls (Haiku classification ≈ $36, Sonnet briefing ≈ $2), ≈ $8 with prompt
+≈ $33/month in LLM calls (Haiku classification ≈ $31, Sonnet briefing ≈ $2), ≈ $19 with prompt
 caching, plus a small VM for n8n. Against: 3 hours × 6 analysts every morning.
 
 ## Scope cuts (deliberate)
