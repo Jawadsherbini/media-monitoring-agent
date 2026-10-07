@@ -66,3 +66,12 @@
     exact numbering/citation-check pattern of the briefing, adds ~60 lines, and cannot affect the
     core loop. Tested on three questions: every citation valid, and the model declined to count an
     item that did not name the subject. Embedding retrieval is the stated next step.
+
+18. Hard daily cap on classification calls (DAILY_CLASSIFY_CAP, default 3,000 ≈ 2× expected
+    volume), plus per-call output caps and per-step item caps already in place. A runaway feed or
+    a loop bug costs at most one capped day. The API key's own spend limit is the second backstop.
+
+19. Articles are untrusted input. Prompt-injection defence is structural, not prompt-based: fixed
+    label validation on classification, citation verification on drafts, and mandatory human
+    approval before delivery. A hostile page can waste one classification call; it cannot change
+    what reaches the Director General.

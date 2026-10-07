@@ -38,7 +38,7 @@ every 10 min Schedule ──► ingest ──► classify ──► new high-ris
 
 ## Security and data residency
 
-n8n and the database run inside the client's environment; the only outbound traffic is article text to the LLM API over HTTPS. Secrets live in `.env`, never in code or Git, and every API call needs a key. Production adds HTTPS in front of n8n and the API, role-based access (analysts approve, DG office reads), a regional LLM endpoint if policy requires data to stay in-Kingdom, and an audit trail from the `briefings` table plus n8n execution history.
+n8n and the database run inside the client's environment; the only outbound traffic is article text to the LLM API over HTTPS. Secrets live in `.env`, never in code or Git, and every API call needs a key. Production adds HTTPS in front of n8n and the API, role-based access (analysts approve, DG office reads), a regional LLM endpoint if policy requires data to stay in-Kingdom, and an audit trail from the `briefings` table plus n8n execution history. Articles are treated as untrusted input: label validation, citation checks and human approval mean a hostile page cannot change what reaches the DG.
 
 ## Cost (1,500 items/day)
 

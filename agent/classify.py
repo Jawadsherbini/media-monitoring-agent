@@ -1,9 +1,10 @@
-import json
+import json, os
 from datetime import datetime, timezone
 from anthropic import AuthenticationError
 from .db import get_conn
 from .llm import client
 
+DAILY_CLASSIFY_CAP = int(os.environ.get("DAILY_CLASSIFY_CAP", "3000"))
 MODEL = "claude-haiku-4-5-20251001"
 
 THEMES = ["tourism_strategy", "destinations_gigaprojects", "aviation_visa_entry",
@@ -53,6 +54,14 @@ def is_high_risk(row) -> bool:
 
 def classify_pending(limit: int = 50) -> dict:
     conn = get_conn()
+    today = datetime.now(timezone.utc).date().isoformat()
+    done_today = conn.execute(
+        "SELECT COUNT(*) FROM articles WHERE classified_at >= ?", (today,)).fetchone()[0]
+    if done_today >= DAILY_CLASSIFY_CAP:
+        conn.close()
+        return {"classified": 0, "errors": 0, "high_risk": 0,
+                "skipped": "daily cap reached", "cap": DAILY_CLASSIFY_CAP, "done_today": done_today}
+    limit = min(limit, DAILY_CLASSIFY_CAP - done_today)
     rows = conn.execute(
         "SELECT id, outlet, title, summary FROM articles "
         "WHERE theme IS NULL ORDER BY published_at DESC LIMIT ?", (limit,)).fetchall()

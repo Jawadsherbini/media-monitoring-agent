@@ -47,6 +47,18 @@ See a [complete generated briefing](docs/sample-briefing.md) (65 items, every ci
 | **Risk rule in plain code** | High risk = negative + high priority + a sector theme. Readable and changeable by the client, not learned by a model. |
 | **Measured** | 83% theme and 80% sentiment agreement with a human labeller on a blind sample — see [eval/RESULTS.md](eval/RESULTS.md). |
 | **Loud failures** | Dead feeds, cut-off drafts and bad citations appear as warnings on the draft. A failing step stops the workflow instead of sending an empty briefing. |
+| **Cost cannot run away** | Every call has an output cap, every step has an item cap, and a hard daily limit on classification calls (`DAILY_CLASSIFY_CAP`, default 3,000) stops a runaway feed or loop before it becomes a bill. A spend limit on the API key is the second backstop. |
+
+## Security and data handling
+
+| Concern | How it is handled |
+|---|---|
+| **Where the data lives** | n8n and the SQLite archive run inside the client's environment. The only outbound traffic is article text to the LLM API over HTTPS; nothing from the archive, the briefings or the approval decisions leaves. |
+| **Secrets** | API keys live in `.env`, which is git-ignored; `.env.example` holds placeholders only. The pipeline refuses to start with a placeholder key. |
+| **Access to the API** | Every endpoint except `/health` requires an API key, compared in constant time. n8n is the only caller. |
+| **Untrusted input** | Articles are treated as data, never as instructions: the classifier's output is validated against a fixed label set, every citation in a draft is checked against the supplied items, and a human approves before anything is sent. A page containing "ignore your instructions" cannot change a label, invent a source, or reach the Director General. |
+| **Audit trail** | Every briefing stores who approved or rejected it and when; n8n keeps a full execution history of every run. |
+| **Production path** | HTTPS in front of n8n and the API, role-based access (analysts approve, DG office reads), Postgres with backups, and a regional LLM endpoint if policy requires data to stay in-Kingdom. |
 
 ---
 
