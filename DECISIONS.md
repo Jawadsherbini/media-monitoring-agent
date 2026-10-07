@@ -44,8 +44,9 @@
 11. Alerts use two endpoints (pending, then ack) instead of one. Acknowledgement happens only
     after the message is sent, so a delivery failure re-sends rather than silently losing alerts.
 
-12. Email only for delivery; Arabic sources, WhatsApp/Teams and archive Q&A cut. The brief says to
-    protect the core loop first. All three are in the "next two weeks" list in docs/architecture.md.
+12. Email only for delivery; Arabic sources and WhatsApp/Teams cut (archive Q&A was added later,
+    see 17). The brief says to protect the core loop first. Both are in the "next two weeks"
+    list in docs/architecture.md.
 
 13. n8n runs locally over plain HTTP for the prototype (Safari refuses its secure cookie on
     localhost). Production puts HTTPS in front of both n8n and the API.

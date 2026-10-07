@@ -18,6 +18,7 @@ RSS feeds ──► ingest ──► de-dup ──► classify (Haiku) ──►
                                         │                        rejected ──► notify analyst
                                         ▼
                             n8n (every 10 min): new high-risk items ──► ONE alert email
+                            ask.py: "What was written about visas this week?" ──► grounded answer
 ```
 
 ## Quick start (under 15 minutes)
@@ -90,6 +91,7 @@ add outside facts. Known limitation: keyword search misses synonyms and matches 
 | `agent/ingest.py` | Fetch, clean, de-duplicate (normalised-title hash), save |
 | `agent/classify.py` | Theme / sentiment / priority / justification via Claude Haiku; the high-risk rule |
 | `agent/briefing.py` | Cited briefing via Claude Sonnet; citation and truncation checks |
+| `agent/ask.py` | Plain-language questions over the archive: keyword retrieval + grounded, cited answer |
 | `agent/db.py` | SQLite schema (`articles`, `briefings`) |
 | `api.py` | FastAPI endpoints n8n calls; API-key auth; clean JSON errors |
 | `n8n/*.json` | The two exported workflows |

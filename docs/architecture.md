@@ -16,6 +16,7 @@ hands it to a human to approve. The analysts stay in charge; the machine does th
 | **Claude Sonnet 5.5** | Write the briefing | One document a day read by a Director General: quality dominates |
 | **SQLite** | Archive of articles and briefings, inside the client's environment | One file, no server, standard SQL; Postgres later is a small change |
 | **FastAPI** (`api.py`) | Nine endpoints so n8n can press each step | Adds no logic of its own; API-key auth; clean JSON errors |
+| **Archive Q&A** (`agent/ask.py`) | Plain-language questions over the archive | Keyword retrieval + grounded answer; same citation check as the briefing |
 | **n8n** | Scheduling, human approval, delivery, alert cadence | The backbone the brief requires; the client's team can read and change the flow without code |
 
 ## Data flow
@@ -62,13 +63,13 @@ caching, plus a small VM for n8n. Against: 3 hours × 6 analysts every morning.
 
 ## Scope cuts (deliberate)
 
-Arabic sources, WhatsApp/Teams delivery, natural-language Q&A over the archive. The brief says to
-protect the core loop first; it runs end to end and both approval branches are tested.
+Arabic sources and WhatsApp/Teams delivery. The brief says to protect the core loop first;
+it runs end to end and both approval branches are tested.
 
 ## Next two weeks
 
 1. Arabic sources (the models already read Arabic; the work is feeds and a bilingual codebook).
 2. Story clustering so 16 outlets on one story become one item.
-3. Q&A over the archive: keyword retrieval from SQLite, answer grounded only in retrieved items.
+3. Embedding-based retrieval for the archive Q&A, so questions match meaning rather than keywords.
 4. A 200-item evaluation set labelled by two client analysts, with agreement reported.
 5. Analyst edits captured in the approval form and fed back as examples for the prompt.
