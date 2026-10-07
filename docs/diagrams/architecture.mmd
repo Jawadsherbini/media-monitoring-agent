@@ -1,0 +1,15 @@
+flowchart LR
+    A[12 news feeds<br/>RSS + Google News] --> B[Ingest &<br/>de-duplicate]
+    B --> C[(SQLite<br/>archive)]
+    C --> D[Classify<br/>Claude Haiku]
+    D --> C
+    C --> E[Draft briefing<br/>Claude Sonnet]
+    E --> F{Analyst<br/>approves?}
+    F -- yes --> G[Director General<br/>inbox]
+    F -- no --> H[Back to analyst]
+    C --> I[High-risk check<br/>every 10 min]
+    I --> J[One alert email]
+    C --> K[Ask the archive<br/>cited answers]
+    style F fill:#fff3cd,stroke:#856404
+    style G fill:#d4edda,stroke:#155724
+    style J fill:#f8d7da,stroke:#721c24

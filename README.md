@@ -13,47 +13,17 @@ Stack: **Python · Anthropic Claude · n8n · SQLite**. Runs on one machine; the
 
 ## How it works
 
-```mermaid
-flowchart LR
-    A[12 news feeds<br/>RSS + Google News] --> B[Ingest &<br/>de-duplicate]
-    B --> C[(SQLite<br/>archive)]
-    C --> D[Classify<br/>Claude Haiku]
-    D --> C
-    C --> E[Draft briefing<br/>Claude Sonnet]
-    E --> F{Analyst<br/>approves?}
-    F -- yes --> G[Director General<br/>inbox]
-    F -- no --> H[Back to analyst]
-    C --> I[High-risk check<br/>every 10 min]
-    I --> J[One alert email]
-    C --> K[Ask the archive<br/>cited answers]
-    style F fill:#fff3cd,stroke:#856404
-    style G fill:#d4edda,stroke:#155724
-    style J fill:#f8d7da,stroke:#721c24
-```
+![](docs/diagrams/architecture.png)
+
+*Diagram source: `docs/diagrams/*.mmd` (Mermaid).*
 
 Each step is a plain Python function. n8n does the scheduling, the human approval and the delivery; it never contains logic of its own.
 
 ### The two n8n workflows
 
-```mermaid
-flowchart LR
-    subgraph Daily["Daily briefing — 06:00"]
-        direction LR
-        S1[Schedule] --> P[Run pipeline] --> D[Prepare draft] --> R[Email analyst<br/>and WAIT for form]
-        R --> V[Record decision] --> Q{Approved?}
-        Q -- yes --> M[Markdown → HTML] --> DG[Email DG office]
-        Q -- no --> N[Notify analyst]
-    end
-```
+![](docs/diagrams/daily-briefing.png)
 
-```mermaid
-flowchart LR
-    subgraph Alerts["Risk alerts — every 10 minutes"]
-        direction LR
-        S2[Schedule] --> I2[Ingest] --> C2[Classify] --> PA[Pending<br/>high-risk items]
-        PA --> CA[Compose ONE message] --> SE[Email] --> ACK[Acknowledge]
-    end
-```
+![](docs/diagrams/risk-alerts.png)
 
 | Approved run of the daily workflow | Risk-alert workflow |
 |---|---|
@@ -118,20 +88,7 @@ Then in a second terminal: `npx n8n` (Safari users: `N8N_SECURE_COOKIE=false npx
 
 ## What's next
 
-```mermaid
-mindmap
-  root((Media Monitoring Agent))
-    Learn from the analysts
-      Feedback loop from approvals
-    More sources
-      Social media via official APIs
-      Arabic sources
-    More choice
-      Client-chosen LLM provider
-      Teams / Slack / WhatsApp delivery
-    Smarter search
-      Embedding retrieval for the archive
-```
+![](docs/diagrams/whats-next.png)
 
 | Idea | What it means | What the directorate gets |
 |---|---|---|

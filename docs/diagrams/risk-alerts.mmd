@@ -1,0 +1,6 @@
+flowchart LR
+    subgraph Alerts["Risk alerts — every 10 minutes"]
+        direction LR
+        S2[Schedule] --> I2[Ingest] --> C2[Classify] --> PA[Pending<br/>high-risk items]
+        PA --> CA[Compose ONE message] --> SE[Email] --> ACK[Acknowledge]
+    end

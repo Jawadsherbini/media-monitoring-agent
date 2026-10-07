@@ -1,0 +1,8 @@
+flowchart LR
+    subgraph Daily["Daily briefing — 06:00"]
+        direction LR
+        S1[Schedule] --> P[Run pipeline] --> D[Prepare draft] --> R[Email analyst<br/>and WAIT for form]
+        R --> V[Record decision] --> Q{Approved?}
+        Q -- yes --> M[Markdown → HTML] --> DG[Email DG office]
+        Q -- no --> N[Notify analyst]
+    end
