@@ -78,9 +78,9 @@ Set each workflow's timezone (⋯ → Settings) to `Asia/Riyadh` before publishi
 |---|---|
 | ![](docs/screenshots/n8n-daily-briefing.png) | ![](docs/screenshots/n8n-risk-alerts.png) |
 
-| Draft sent to the analyst | Approval form | Approved briefing in the DG inbox |
-|---|---|---|
-| ![](docs/screenshots/email-approval.png) | ![](docs/screenshots/approval-form.png) | ![](docs/screenshots/email-dg.png) |
+| The analyst's draft email | Approval form | What the Director General receives | A high-risk alert |
+|---|---|---|---|
+| ![](docs/screenshots/email-approval.png) | ![](docs/screenshots/approval-form.png) | ![](docs/screenshots/email-dg.png) | ![](docs/screenshots/email-alert.png) |
 
 Full outputs: [a complete generated briefing](docs/sample-briefing.md) (65 items, every citation
 verified) and [two archive Q&A answers](docs/sample-qa.md).

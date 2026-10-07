@@ -61,7 +61,7 @@
     {
       "parameters": {
         "operation": "sendAndWait",
-        "fromEmail": "analyst@directorate.example",
+        "fromEmail": "agent@directorate.example",
         "toEmail": "analyst@directorate.example",
         "subject": "=Draft briefing #{{ $json.briefing_id }} — approval needed ({{ $json.article_count }} items)",
         "message": "={{ `REVIEW SUMMARY: ${$json.summary_line}\\n\\n${$json.warnings.length ? \"WARNINGS:\\n- \" + $json.warnings.join(\"\\n- \") + \"\\n\\n\" : \"No warnings.\\n\\n\"}Open the form below to approve or reject.\\n\\n----------------------------------------\\n\\n${$json.markdown}` }}",
@@ -170,8 +170,8 @@
     },
     {
       "parameters": {
-        "fromEmail": "analyst@directorate.example ",
-        "toEmail": "dg-office@directorate.example ",
+        "fromEmail": "agent@directorate.example",
+        "toEmail": "dg-office@directorate.example",
         "subject": "=Daily Media Briefing — approved by {{ $('Record review').item.json.reviewed_by }}",
         "html": "={{ $json.html }}",
         "options": {}
@@ -194,7 +194,7 @@
     },
     {
       "parameters": {
-        "fromEmail": "analyst@directorate.example",
+        "fromEmail": "agent@directorate.example",
         "toEmail": "analyst@directorate.example",
         "subject": "=Briefing #{{ $('Prepare draft').item.json.briefing_id }} rejected — nothing sent to DG",
         "emailFormat": "text",
