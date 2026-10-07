@@ -56,3 +56,7 @@
 15. Evaluation by a blind, stratified 30-item hand-labelled sample with a written codebook, scored
     on theme and sentiment only (priority is judgement). No prompt tuning after scoring, to avoid
     fitting to 30 items. In deployment the client's analysts own the codebook and labels.
+
+16. README verified by fresh clone on 7 Oct: pip install → first briefing in under 10 minutes.
+    The test caught two real issues (placeholder key not obvious; 150 retries on a dead key),
+    both fixed the same day.
