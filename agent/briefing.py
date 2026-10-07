@@ -1,11 +1,8 @@
-import os, re
+import re
 from datetime import datetime, timedelta, timezone
-from anthropic import Anthropic
-from dotenv import load_dotenv
 from .db import get_conn
+from .llm import client
 
-load_dotenv()
-client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 MODEL = "claude-sonnet-5-5"
 MAX_ARTICLES = 80
 

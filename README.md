@@ -34,7 +34,10 @@ pip install -r requirements.txt
 
 # 2. Configure
 cp .env.example .env
-# edit .env: add ANTHROPIC_API_KEY and any long random string as API_KEY
+# Open .env and replace BOTH placeholder values:
+#   ANTHROPIC_API_KEY = your key from console.anthropic.com
+#   API_KEY           = any long random string (n8n will use it to call the API)
+# The pipeline refuses to start while a placeholder is still there.
 
 # 3. Load data and produce a first briefing (≈3 min)
 python check_feeds.py              # optional: confirms all 12 sources respond

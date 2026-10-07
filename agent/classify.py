@@ -1,11 +1,9 @@
-import json, os
+import json
 from datetime import datetime, timezone
-from anthropic import Anthropic
-from dotenv import load_dotenv
+from anthropic import AuthenticationError
 from .db import get_conn
+from .llm import client
 
-load_dotenv()
-client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 MODEL = "claude-haiku-4-5-20251001"
 
 THEMES = ["tourism_strategy", "destinations_gigaprojects", "aviation_visa_entry",
@@ -62,6 +60,9 @@ def classify_pending(limit: int = 50) -> dict:
     for r in rows:
         try:
             c = classify_article(r["outlet"], r["title"], r["summary"])
+        except AuthenticationError:
+            conn.close()
+            raise RuntimeError("Anthropic rejected the API key. Check ANTHROPIC_API_KEY in .env.")
         except Exception as e:
             stats["errors"] += 1
             print(f"ERROR {r['id'][:8]} {type(e).__name__}: {e}")
