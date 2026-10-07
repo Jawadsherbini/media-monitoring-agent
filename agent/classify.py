@@ -79,4 +79,6 @@ def classify_pending(limit: int = 50) -> dict:
     return stats
 
 if __name__ == "__main__":
-    print(classify_pending(limit=20))
+    import sys
+    limit = int(sys.argv[1]) if len(sys.argv) > 1 else 20
+    print(classify_pending(limit=limit))
