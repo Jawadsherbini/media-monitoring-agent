@@ -70,6 +70,18 @@ In n8n:
 
 Set each workflow's timezone (⋯ → Settings) to `Asia/Riyadh` before publishing the schedules.
 
+## Ask the archive (requirement 6, simplest form)
+
+```bash
+python -m agent.ask "What has been written about visa changes this week and by whom?" 7
+```
+
+Keyword retrieval from SQLite over the last N days (default 7), ranked by keyword and phrase
+matches, then Claude Sonnet answers using only the retrieved items, with the same citation check
+as the briefing. It names outlets, says when the items don't answer the question, and refuses to
+add outside facts. Known limitation: keyword search misses synonyms and matches substrings
+("air" also finds "airport"); the next step is embedding-based retrieval.
+
 ## Repository layout
 
 | Path | What it is |

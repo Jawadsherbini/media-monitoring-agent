@@ -60,3 +60,8 @@
 16. README verified by fresh clone on 7 Oct: pip install → first briefing in under 10 minutes.
     The test caught two real issues (placeholder key not obvious; 150 retries on a dead key),
     both fixed the same day.
+
+17. Archive Q&A built as keyword retrieval + grounded answer, no vector store. Reason: it reuses the
+    exact numbering/citation-check pattern of the briefing, adds ~60 lines, and cannot affect the
+    core loop. Tested on three questions: every citation valid, and the model declined to count an
+    item that did not name the subject. Embedding retrieval is the stated next step.
