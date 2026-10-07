@@ -1,80 +1,61 @@
 # Media Monitoring Agent
 
-An agentic pipeline that replaces a manual three-hour daily media review for a government
-communications directorate. It ingests news, classifies every item against the directorate's
-priority themes, drafts a fully cited daily briefing for **human approval**, delivers the approved
-version on a schedule, and raises batched alerts within 15 minutes when high-risk coverage appears.
+**Reads ~1,000 news items a day, drafts a fully cited briefing, and lets a human approve it before anyone senior sees it.** Built for a government communications team that was spending three analyst-hours every morning doing this by hand.
 
-Built in Python + Anthropic Claude + n8n. Runs entirely on one machine; nothing leaves the
-environment except article text sent to the LLM API.
+- Every claim in the briefing links to its source, and the code checks that no citation was invented.
+- Nothing reaches the Director General without a named analyst clicking **Approve**.
+- High-risk stories trigger one alert within 15 minutes, around the clock.
+- Analysts can ask the archive questions in plain English and get a cited answer.
 
-```
-RSS feeds ──► ingest ──► de-dup ──► classify (Haiku) ──► SQLite ──► draft briefing (Sonnet)
-                                        │                               │
-                                        │                               ▼
-                                        │                   n8n: email draft to analyst
-                                        │                        WAIT for approval form
-                                        │                        approved ──► email DG office
-                                        │                        rejected ──► notify analyst
-                                        ▼
-                            n8n (every 10 min): new high-risk items ──► ONE alert email
-                            ask.py: "What was written about visas this week?" ──► grounded answer
-```
+Stack: **Python · Anthropic Claude · n8n · SQLite**. Runs on one machine; the only data that leaves it is article text sent to the LLM API.
 
-## Quick start (under 15 minutes)
+---
 
-Requirements: Python 3.11+, Node.js 20+ (for n8n), an Anthropic API key, a Gmail address with
-an app password (for sending email).
+## How it works
 
-```bash
-# 1. Clone and install (≈2 min)
-git clone https://github.com/Jawadsherbini/media-monitoring-agent.git
-cd media-monitoring-agent
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-
-# 2. Configure
-cp .env.example .env
-# Open .env and replace BOTH placeholder values:
-#   ANTHROPIC_API_KEY = your key from console.anthropic.com
-#   API_KEY           = any long random string (n8n will use it to call the API)
-# The pipeline refuses to start while a placeholder is still there.
-
-# 3. Load data and produce a first briefing (≈3 min)
-python check_feeds.py              # optional: confirms all 12 sources respond
-python -m agent.ingest             # fetch + de-duplicate into media.db
-python -m agent.classify 150       # classify the 150 most recent items
-python -m agent.briefing 72        # draft a briefing from the last 72 hours, printed to screen
-
-# 4. Start the API (leave running)
-uvicorn api:app --port 8000
+```mermaid
+flowchart LR
+    A[12 news feeds<br/>RSS + Google News] --> B[Ingest &<br/>de-duplicate]
+    B --> C[(SQLite<br/>archive)]
+    C --> D[Classify<br/>Claude Haiku]
+    D --> C
+    C --> E[Draft briefing<br/>Claude Sonnet]
+    E --> F{Analyst<br/>approves?}
+    F -- yes --> G[Director General<br/>inbox]
+    F -- no --> H[Back to analyst]
+    C --> I[High-risk check<br/>every 10 min]
+    I --> J[One alert email]
+    C --> K[Ask the archive<br/>cited answers]
+    style F fill:#fff3cd,stroke:#856404
+    style G fill:#d4edda,stroke:#155724
+    style J fill:#f8d7da,stroke:#721c24
 ```
 
-Then n8n, in a second terminal (first start downloads n8n, ≈3 min):
+Each step is a plain Python function. n8n does the scheduling, the human approval and the delivery; it never contains logic of its own.
 
-```bash
-npx n8n            # open http://localhost:5678 and create the local owner account
-# Safari users: start with  N8N_SECURE_COOKIE=false npx n8n  (local-only prototype; production uses HTTPS)
+### The two n8n workflows
+
+```mermaid
+flowchart LR
+    subgraph Daily["Daily briefing — 06:00"]
+        direction LR
+        S1[Schedule] --> P[Run pipeline] --> D[Prepare draft] --> R[Email analyst<br/>and WAIT for form]
+        R --> V[Record decision] --> Q{Approved?}
+        Q -- yes --> M[Markdown → HTML] --> DG[Email DG office]
+        Q -- no --> N[Notify analyst]
+    end
 ```
 
-In n8n:
-1. **Credentials → Add**: *Header Auth* with Name `X-API-Key`, Value = your `API_KEY` from `.env`.
-   Use `127.0.0.1`, not `localhost`, in any URL you type into n8n: recent Node versions resolve
-   `localhost` to IPv6 while the API listens on IPv4.
-2. **Credentials → Add**: *SMTP* with your Gmail address, app password, host `smtp.gmail.com`, port 465, SSL on.
-3. **⋯ → Import from file** → `n8n/risk-alerts.json`, then `n8n/daily-briefing.json`. Open each
-   HTTP Request node and select the Header Auth credential; open each Send Email node and select
-   the SMTP credential and set From/To to your address.
-4. Open **Daily briefing** → **Execute workflow**. Within 1–3 minutes you receive the draft by
-   email; open the form link (on the same machine), approve, and the formatted briefing arrives
-   at `<you>+dg@gmail.com`.
-5. Open **Risk alerts** → **Execute workflow**. Pending high-risk items arrive as one email.
+```mermaid
+flowchart LR
+    subgraph Alerts["Risk alerts — every 10 minutes"]
+        direction LR
+        S2[Schedule] --> I2[Ingest] --> C2[Classify] --> PA[Pending<br/>high-risk items]
+        PA --> CA[Compose ONE message] --> SE[Email] --> ACK[Acknowledge]
+    end
+```
 
-Set each workflow's timezone (⋯ → Settings) to `Asia/Riyadh` before publishing the schedules.
-
-## What it looks like
-
-| Daily briefing workflow (approved run) | Risk alerts workflow |
+| Approved run of the daily workflow | Risk-alert workflow |
 |---|---|
 | ![](docs/screenshots/n8n-daily-briefing.png) | ![](docs/screenshots/n8n-risk-alerts.png) |
 
@@ -82,118 +63,96 @@ Set each workflow's timezone (⋯ → Settings) to `Asia/Riyadh` before publishi
 |---|---|---|---|
 | ![](docs/screenshots/email-approval.png) | ![](docs/screenshots/approval-form.png) | ![](docs/screenshots/email-dg.png) | ![](docs/screenshots/email-alert.png) |
 
-Full outputs: [a complete generated briefing](docs/sample-briefing.md) (65 items, every citation
-verified) and [two archive Q&A answers](docs/sample-qa.md).
+See a [complete generated briefing](docs/sample-briefing.md) (65 items, every citation verified) and [two archive Q&A answers](docs/sample-qa.md).
 
-## Ask the archive (requirement 6, simplest form)
+---
+
+## Why you can trust what it sends
+
+| Safeguard | How |
+|---|---|
+| **Human sign-off** | The draft goes to a named analyst; decision, name and time are stored. Rejected drafts never leave the building. |
+| **No invented sources** | The model may only use the articles it is given. Code verifies every `[n]` citation points to one of them; anything else is flagged at the top of the draft. |
+| **Honest about gaps** | It says when sources disagree, when an outlet is unnamed, and when two stories cannot be linked on the evidence. |
+| **Risk rule in plain code** | High risk = negative + high priority + a sector theme. Readable and changeable by the client, not learned by a model. |
+| **Measured** | 83% theme and 80% sentiment agreement with a human labeller on a blind sample — see [eval/RESULTS.md](eval/RESULTS.md). |
+| **Loud failures** | Dead feeds, cut-off drafts and bad citations appear as warnings on the draft. A failing step stops the workflow instead of sending an empty briefing. |
+
+---
+
+## Why Anthropic Claude
+
+The best fit for this job, chosen on three things that matter more than price at this volume:
+
+1. **It follows citation rules.** Told to use only the supplied items and cite each claim, it does — and refuses to connect stories without evidence. That behaviour is the whole trust story.
+2. **Two tiers, one key.** Haiku handles 1,500 cheap classifications a day; Sonnet writes the one document that matters. Same SDK, same key.
+3. **A path to regional hosting** through the hyperscalers if the client needs data to stay in-Kingdom.
+
+Total LLM cost at 1,500 items/day: **≈ $33 / month** (≈ $19 with prompt caching). A comparison with OpenAI, Google and Gulf-hosted options, and how a client would switch provider, is in [docs/llm-choice.md](docs/llm-choice.md).
+
+---
+
+## Quick start (under 15 minutes)
+
+Needs Python 3.11+, Node.js 20+, an Anthropic API key, and a Gmail address with an app password.
 
 ```bash
+git clone https://github.com/Jawadsherbini/media-monitoring-agent.git
+cd media-monitoring-agent
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env      # then open .env and replace BOTH placeholder values
+
+python check_feeds.py     # optional: all 12 sources respond
+python -m agent.ingest    # fetch + de-duplicate into media.db
+python -m agent.classify 150
+python -m agent.briefing 72          # prints a briefing from the last 72 hours
 python -m agent.ask "What has been written about visa changes this week and by whom?" 7
+
+uvicorn api:app --port 8000          # leave running; n8n calls this
 ```
 
-Keyword retrieval from SQLite over the last N days (default 7), ranked by keyword and phrase
-matches, then Claude Sonnet answers using only the retrieved items, with the same citation check
-as the briefing. It names outlets, says when the items don't answer the question, and refuses to
-add outside facts. Known limitation: keyword search misses synonyms and matches substrings
-("air" also finds "airport"); the next step is embedding-based retrieval.
+Then in a second terminal: `npx n8n` (Safari users: `N8N_SECURE_COOKIE=false npx n8n`), open http://localhost:5678, and follow [docs/n8n-setup.md](docs/n8n-setup.md) to import the two workflows (about 5 minutes). Use `127.0.0.1`, not `localhost`, in n8n URLs.
 
-## Repository layout
+---
+
+## What's next
+
+```mermaid
+mindmap
+  root((Media Monitoring Agent))
+    Learn from the analysts
+      Feedback loop from approvals
+    More sources
+      Social media via official APIs
+      Arabic sources
+    More choice
+      Client-chosen LLM provider
+      Teams / Slack / WhatsApp delivery
+    Smarter search
+      Embedding retrieval for the archive
+```
+
+| Idea | What it means | What the directorate gets |
+|---|---|---|
+| **Feedback loop** | Every approval, rejection and note becomes a measurement and a labelled example; common corrections are added to the prompt after review, and the evaluation set grows from the analysts' own labels | A quality number the Director can watch, and a system that improves from the analysts' own judgement — without ever learning automatically |
+| **Social media, the same way as news** | Monitor public posts about Saudi tourism and its destinations on X, Instagram and TikTok — reading each platform through the door it provides for this purpose (X's official search API; a licensed listening feed for Instagram and TikTok), exactly as the news sources are read through RSS. Posts enter the pipeline as items, so classification, briefing, alerts and Q&A work unchanged; the risk rule gains a reach/velocity condition | Most people now get their news from social media. The directorate sees what the public is saying, not only what newspapers print — and a post spreading fast is flagged before it becomes a crisis |
+| **Arabic sources** | The models already read Arabic; the work is feeds and a bilingual codebook | Coverage of the outlets the Saudi public actually reads |
+| **Client-chosen LLM provider** | A setting behind the existing single swap point (`agent/llm.py`) | Procurement and data-residency rules decide the vendor; the evaluation set is re-run before any switch, so the choice is measured, not assumed |
+| **More channels** | Teams, Slack and WhatsApp are each one n8n node on the approved branch | The briefing and alerts arrive where people already work |
+| **Embedding retrieval** | Meaning-based search for the archive Q&A | Questions match meaning, not only keywords |
+
+---
+
+## Repository
 
 | Path | What it is |
 |---|---|
-| `agent/sources.py` | The 12 feeds: 4 direct RSS, 5 per-outlet Google News feeds, 3 topic feeds |
-| `agent/ingest.py` | Fetch, clean, de-duplicate (normalised-title hash), save |
-| `agent/classify.py` | Theme / sentiment / priority / justification via Claude Haiku; the high-risk rule |
-| `agent/briefing.py` | Cited briefing via Claude Sonnet; citation and truncation checks |
-| `agent/ask.py` | Plain-language questions over the archive: keyword retrieval + grounded, cited answer |
-| `agent/db.py` | SQLite schema (`articles`, `briefings`) |
-| `api.py` | FastAPI endpoints n8n calls; API-key auth; clean JSON errors |
-| `n8n/*.json` | The two exported workflows |
-| `eval/` | Hand-labelled evaluation set, scoring script, results, token measurement |
-| `docs/architecture.md` | One-page architecture note |
+| `agent/` | `ingest.py` · `classify.py` · `briefing.py` · `ask.py` · `db.py` · `llm.py` (single LLM swap point) · `sources.py` |
+| `api.py` | FastAPI endpoints n8n calls — [docs/api.md](docs/api.md) |
+| `n8n/` | The two exported workflows (JSON) |
+| `eval/` | Hand-labelled sample, scoring script, results, token measurement |
+| `docs/` | [Architecture note](docs/architecture.md) (one page, [PDF](docs/architecture.pdf)) · [LLM choice](docs/llm-choice.md) · [n8n setup](docs/n8n-setup.md) · [API](docs/api.md) · samples · screenshots |
 | `DECISIONS.md` | Every design decision and its trade-off, in order |
 
-## API endpoints (what n8n presses)
-
-| Endpoint | Purpose |
-|---|---|
-| `GET /health` | Liveness check (no auth) |
-| `POST /ingest` | Fetch feeds, de-duplicate, store |
-| `POST /classify?limit=N` | Classify unclassified items |
-| `POST /briefing?since_hours=N` | Draft a briefing |
-| `POST /pipeline/daily?since_hours=N` | Ingest → classify → draft, in one call for the morning run |
-| `GET /briefing/{id}` · `POST /briefing/{id}/review` | Read a briefing; record the analyst's decision |
-| `GET /alerts/pending` · `POST /alerts/ack` | High-risk items not yet alerted; mark them alerted after the message is sent |
-
-All endpoints except `/health` require header `X-API-Key`. Interactive docs at `http://127.0.0.1:8000/docs`.
-
-## Themes and the high-risk definition
-
-Themes: `tourism_strategy`, `destinations_gigaprojects`, `aviation_visa_entry`, `reputational_risk`,
-plus `not_relevant` for noise (sport, weather, regional politics with no tourism angle).
-
-**High risk** = sentiment `negative` **and** priority `high` **and** any sector theme. The theme
-says which team should respond; the alert fires on tone and urgency. The rule lives in code
-(`agent/classify.py::is_high_risk`), not inside the model, so the client can read and change it.
-
-## Evaluation
-
-30-item blind, stratified sample, hand-labelled against a written codebook (`eval/RESULTS.md`):
-**83% theme agreement, 80% sentiment agreement.** Four of five theme disagreements are boundary
-cases; one is a genuine miss caused by the deliberate "when in doubt, not_relevant" rule.
-
-The briefing is checked in code after generation: every `[n]` citation must point to an item
-that was actually supplied (hallucinated citations are flagged), and a draft cut short by the
-length limit is flagged. Both warnings appear at the top of the draft the analyst sees.
-
-## Cost at 1,500 items/day
-
-| Step | Model | Monthly tokens | Monthly cost |
-|---|---|---|---|
-| Classification | Claude Haiku 4.5 ($1 / $5 per M) | ~17.9M in, ~2.7M out | ≈ $31.4 |
-| Daily briefing | Claude Sonnet 5.5 ($2 / $10 per M) | ~0.4M in, ~0.1M out | ≈ $2 |
-| Alerts | reuse classification | — | $0 |
-| **LLM total** | | | **≈ $33.4 / month** |
-
-Classification row measured with `eval/measure_tokens.py` (10-call average). Briefing row
-estimated from one measured run (3,624 in / 2,766 out for 15 items) scaled to the 80-item cap.
-
-Prompt caching on the fixed classification prompt (about 350 of the 397 input tokens are
-identical every call) would cut the classification line to roughly $17: cached input reads
-cost $0.10 per million instead of $1, while output cost is unchanged.
-Plus a small VM for n8n inside the client's network. Re-measure with `python -m eval.measure_tokens`.
-
-## Scope decisions
-
-- **Cut:** Arabic sources, WhatsApp and Teams delivery. The brief allows narrowing; the core loop
-  had to be reliable first. Arabic is the first thing to add (see architecture note).
-- **Email only** for delivery. One channel done properly beats three half-wired.
-- **Google News per-outlet feeds** for outlets that block or lack RSS. Every item keeps its
-  original publisher and link. Trade-off: a dependency on Google; replace with direct feeds or a
-  news API in production.
-- **SQLite**, not Postgres. One file, zero setup, enough for half a million rows a year. Standard
-  SQL, so moving to Postgres is a small change.
-- **No agent framework.** Plain functions calling the LLM, orchestrated by n8n. Every step is
-  readable and testable on its own.
-- **Anthropic Claude**, chosen for instruction-following on citations, two price tiers behind one
-  SDK, and a regional-hosting path; see the provider comparison in `docs/llm-choice.md`.
-  `agent/llm.py` is the single swap point; a client-selectable provider and extra delivery
-  channels (Teams, Slack, WhatsApp) are listed as next steps.
-
-## Known limitations
-
-- De-duplication catches identical headlines, not rewritten ones; the same story from 16 outlets
-  appeared as 16 items. Alerts are batched so this never becomes 16 emails. Next step: fuzzy or
-  embedding-based story clustering.
-- Google News links are redirect URLs; they resolve to the publisher but look opaque.
-- The approval form link is local (`localhost`) in this prototype.
-- Evaluation set is a 30-item smoke test by a single labeller, not a benchmark.
-
-## Failure behaviour
-
-- A failing feed never stops the run; it is listed in `failed_feeds` and surfaced as a warning
-  on the draft.
-- Classification commits after every item, so a crash mid-run loses nothing.
-- Any API error returns clean JSON with a status code n8n treats as failure, so the workflow
-  stops at the failing node instead of emailing an empty briefing.
-- Alerts are acknowledged only after the message is sent, so a delivery failure re-sends them.
+**Scope of this version.** De-duplication matches identical headlines, so one story carried by many outlets appears as several items — the briefing merges them and the alerts batch them, and story clustering is the natural next step. Archive search is keyword-based by design (transparent and fast); embedding retrieval adds meaning-based matching. Evaluation uses a 30-item hand-labelled sample with a written codebook, built so the client's analysts can extend it with their own labels. Google News items link through Google's redirect to the original article. The approval link is local because the whole prototype runs on one machine; in deployment n8n sits on a server inside the client's network.

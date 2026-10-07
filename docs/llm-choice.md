@@ -6,17 +6,18 @@
 | Writing tier | Sonnet 5.5, $2 / $10 | GPT-5-class, ~$1.25–2 / $10–12 | Gemini 3.x Pro, $2 / $12 | Quality gap on long structured English drafting |
 | Monthly cost at 1,500 items/day | ≈ $33 (measured) | ≈ $25–45 (est.) | ≈ $20–40 (est.) | Hardware/licence cost, not per-token |
 | Data residency today | Public API; also via AWS Bedrock / Google Vertex regional endpoints | Public API; Azure regional endpoints | Public API; Vertex regional endpoints | Strongest residency story |
-| Why not chosen for the prototype | — | Comparable; no decisive advantage for this task | Comparable; cheapest at the floor | No time in 3 days to stand up and evaluate; quality unproven on this task |
+| Why not chosen here | — | Not tested here; would need the same citation-discipline evaluation before use | Not tested here; cheapest at the floor, same evaluation needed before use | Not evaluated in the time available; quality on long English drafting unproven |
 
 Prices are per million tokens, from the vendors' published price lists in the first week of
 October 2026; they change monthly and must be re-checked before any quote to a client.
 
-The decision was not price: all three major vendors land within a few dollars a month at this
-volume. It was made on (1) how reliably the model obeys "use only the supplied items and cite
-each claim" — demonstrated in every test run, including declining to connect two stories without
-evidence; (2) two quality tiers behind one SDK and one key, so bulk and quality work cost what
-they should; (3) prompt caching for the fixed classification prompt; (4) a credible path to
-regional hosting through the hyperscalers if the client requires it.
+Price was not the deciding factor — all three major vendors land within a few dollars a month at
+this volume. Claude was the best fit for this task on three grounds: (1) how reliably the model
+obeys "use only the supplied items and cite each claim" — demonstrated in every test run,
+including declining to connect two stories without evidence; (2) two quality tiers behind one SDK
+and one key, so bulk and quality work cost what they should; (3) prompt caching for the fixed
+classification prompt; (4) a credible path to regional hosting through the hyperscalers if the
+client requires it.
 
 **Swapping providers.** `agent/llm.py` is the only file that creates an LLM client; classification
 and drafting import it from there. A provider abstraction (one function per provider behind the

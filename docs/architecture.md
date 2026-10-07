@@ -48,12 +48,11 @@ n8n and the database run inside the client's environment; the only outbound traf
 
 Arabic sources and WhatsApp/Teams delivery. The core loop runs end to end with both approval branches tested, and archive Q&A is built in its simplest grounded form.
 
-## Next two weeks
+## What's next
 
-1. Feedback loop: approval notes become measurement, a growing labelled set, and reviewed prompt examples. Nothing learns automatically.
-2. Selected social accounts via official X/Instagram APIs, with a reach-aware risk rule.
+1. Feedback loop from approvals: measurement, a growing labelled set, and reviewed prompt examples. Nothing learns automatically.
+2. Social media, the same way as news: public posts about Saudi tourism on X, Instagram and TikTok, read through each platform's official API or a licensed listening feed (as news is read through RSS — nothing scraped), with a reach-aware risk rule.
 3. Arabic sources and a bilingual codebook.
-4. Story clustering (16 outlets, one story, one item).
-5. Embedding retrieval for archive Q&A.
-6. 200-item evaluation set labelled by two client analysts.
-7. Client-selectable LLM provider and extra delivery channels (Teams, Slack, WhatsApp) as settings, each verified against the evaluation set.
+4. Client-chosen LLM provider behind `agent/llm.py`, verified against the evaluation set.
+5. Teams, Slack and WhatsApp delivery as n8n nodes on the approved branch.
+6. Embedding retrieval for the archive Q&A.

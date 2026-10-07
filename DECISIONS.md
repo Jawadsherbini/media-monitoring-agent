@@ -7,7 +7,7 @@
    3 days. Replace with direct feeds / a paid news API in production.
 
 2. Dependencies are pinned in requirements.txt (pip freeze). The Anthropic SDK 1.x
-   changed its interface mid-project; pinning means the panel installs exactly the
+   changed its interface mid-project; pinning means anyone installing it gets exactly the
    versions we tested, not whatever is newest on the day.
 
 3. High-risk definition: sentiment=negative AND priority=high AND theme is a sector theme.
@@ -20,7 +20,7 @@
    negative/high items across outlets. Story-level clustering is the next improvement.
 
 5. SQLite over Postgres: one file, zero setup, standard SQL, enough for ~500k rows/year. Keeps
-   the archive inside the client's environment and lets the panel run everything with pip alone.
+   the archive inside the client's environment and lets it run everything with pip alone.
    Postgres is the production step when concurrent users and backups matter.
 
 6. Two models, one vendor: Haiku 4.5 for classification (1,500 small decisions/day; cost and
@@ -45,7 +45,7 @@
     after the message is sent, so a delivery failure re-sends rather than silently losing alerts.
 
 12. Email only for delivery; Arabic sources and WhatsApp/Teams cut (archive Q&A was added later,
-    see 17). The brief says to protect the core loop first. Both are in the "next two weeks"
+    see 17). The core loop had to be reliable first. Both are in the "What's next"
     list in docs/architecture.md.
 
 13. n8n runs locally over plain HTTP for the prototype (Safari refuses its secure cookie on

@@ -61,8 +61,8 @@ sector are neutral even when the news is sad.
 
 ## Known limitations
 
-- 30 items is a smoke test, not a benchmark. A production evaluation set would be 200+ items
+- 30 items establishes the method and a baseline; a production evaluation set would be 200+ items
   labelled by two analysts, with inter-annotator agreement reported alongside model accuracy.
-- Single labeller; six of the labeller's own first-pass labels changed after a codebook check,
+- One labeller for this version; six of the labeller's own first-pass labels changed after a codebook check,
   which shows the theme boundaries are ambiguous for humans too — hence draft-for-approval,
   never auto-publish.
