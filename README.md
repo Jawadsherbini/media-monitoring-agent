@@ -176,7 +176,7 @@ Plus a small VM for n8n inside the client's network. Re-measure with `python -m 
 - **No agent framework.** Plain functions calling the LLM, orchestrated by n8n. Every step is
   readable and testable on its own.
 - **Anthropic Claude**, chosen for instruction-following on citations, two price tiers behind one
-  SDK, and a regional-hosting path; see the provider comparison in `docs/architecture.md`.
+  SDK, and a regional-hosting path; see the provider comparison in `docs/llm-choice.md`.
   `agent/llm.py` is the single swap point; a client-selectable provider and extra delivery
   channels (Teams, Slack, WhatsApp) are listed as next steps.
 
