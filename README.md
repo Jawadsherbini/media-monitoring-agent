@@ -54,6 +54,8 @@ npx n8n            # open http://localhost:5678 and create the local owner accou
 
 In n8n:
 1. **Credentials → Add**: *Header Auth* with Name `X-API-Key`, Value = your `API_KEY` from `.env`.
+   Use `127.0.0.1`, not `localhost`, in any URL you type into n8n: recent Node versions resolve
+   `localhost` to IPv6 while the API listens on IPv4.
 2. **Credentials → Add**: *SMTP* with your Gmail address, app password, host `smtp.gmail.com`, port 465, SSL on.
 3. **⋯ → Import from file** → `n8n/risk-alerts.json`, then `n8n/daily-briefing.json`. Open each
    HTTP Request node and select the Header Auth credential; open each Send Email node and select
@@ -92,7 +94,7 @@ Set each workflow's timezone (⋯ → Settings) to `Asia/Riyadh` before publishi
 | `GET /briefing/{id}` · `POST /briefing/{id}/review` | Read a briefing; record the analyst's decision |
 | `GET /alerts/pending` · `POST /alerts/ack` | High-risk items not yet alerted; mark them alerted after the message is sent |
 
-All endpoints except `/health` require header `X-API-Key`. Interactive docs at `http://localhost:8000/docs`.
+All endpoints except `/health` require header `X-API-Key`. Interactive docs at `http://127.0.0.1:8000/docs`.
 
 ## Themes and the high-risk definition
 
@@ -115,12 +117,12 @@ length limit is flagged. Both warnings appear at the top of the draft the analys
 
 ## Cost at 1,500 items/day
 
-| Step | Model | Monthly tokens (est.) | Monthly cost |
+| Step | Model | Monthly tokens (measured) | Monthly cost |
 |---|---|---|---|
-| Classification | Claude Haiku 4.5 ($1 / $5 per M) | ~22M in, ~2.7M out | ≈ $36 |
+| Classification | Claude Haiku 4.5 ($1 / $5 per M) | ~17.9M in, ~2.7M out | ≈ $31.4 |
 | Daily briefing | Claude Sonnet 5.5 ($2 / $10 per M) | ~0.4M in, ~0.1M out | ≈ $2 |
 | Alerts | reuse classification | — | $0 |
-| **LLM total** | | | **≈ $38 / month** |
+| **LLM total** | | | **≈ $33.4 / month** |
 
 Prompt caching on the fixed classification prompt would cut the largest line to roughly $8.
 Plus a small VM for n8n inside the client's network. Re-measure with `python -m eval.measure_tokens`.
