@@ -42,7 +42,7 @@ n8n and the database run inside the client's environment; the only outbound traf
 
 ## Cost (1,500 items/day)
 
-≈ $33/month in LLM calls (classification ≈ $31 measured, briefing ≈ $2) (prompt caching tested; not applicable at this prompt size), plus a small VM for n8n. Against: 3 hours × 6 analysts every morning.
+≈ $33/month in LLM calls (classification ≈ $31 measured, briefing ≈ $2; prompt caching tested, not applicable at this prompt size), plus a small VM for n8n. Against: 3 hours × 6 analysts every morning.
 
 ## Scope cuts (deliberate)
 
