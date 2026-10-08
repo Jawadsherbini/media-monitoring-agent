@@ -67,9 +67,12 @@
     core loop. Tested on three questions: every citation valid, and the model declined to count an
     item that did not name the subject. Embedding retrieval is the stated next step.
 
-18. Hard daily cap on classification calls (DAILY_CLASSIFY_CAP, default 3,000 ≈ 2× expected
+18. Hard daily cap on classification calls (DAILY_CLASSIFY_CAP, default 5,000 ≈ 3× expected
     volume), plus per-call output caps and per-step item caps already in place. A runaway feed or
     a loop bug costs at most one capped day. The API key's own spend limit is the second backstop.
+    The cap protects against bugs, not costs (a capped day is about $3.50); it sits well above any
+    plausible real news day, and reaching it is surfaced as a warning on the next draft so the
+    pause is never silent.
 
 19. Articles are untrusted input. Prompt-injection defence is structural, not prompt-based: fixed
     label validation on classification, citation verification on drafts, and mandatory human

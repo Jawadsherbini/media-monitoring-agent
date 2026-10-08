@@ -4,7 +4,7 @@ from anthropic import AuthenticationError
 from .db import get_conn
 from .llm import client
 
-DAILY_CLASSIFY_CAP = int(os.environ.get("DAILY_CLASSIFY_CAP", "3000"))
+DAILY_CLASSIFY_CAP = int(os.environ.get("DAILY_CLASSIFY_CAP", "5000"))
 MODEL = "claude-haiku-4-5-20251001"
 
 THEMES = ["tourism_strategy", "destinations_gigaprojects", "aviation_visa_entry",

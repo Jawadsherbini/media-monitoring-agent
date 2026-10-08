@@ -47,7 +47,7 @@ See a [complete generated briefing](docs/sample-briefing.md) (65 items, every ci
 | **Risk rule in plain code** | High risk = negative + high priority + a sector theme. Readable and changeable by the client, not learned by a model. |
 | **Measured** | 83% theme and 80% sentiment agreement with a human labeller on a blind sample — see [eval/RESULTS.md](eval/RESULTS.md). |
 | **Loud failures** | Dead feeds, cut-off drafts and bad citations appear as warnings on the draft. A failing step stops the workflow instead of sending an empty briefing. |
-| **Cost cannot run away** | Every call has an output cap, every step has an item cap, and a hard daily limit on classification calls (`DAILY_CLASSIFY_CAP`, default 3,000) stops a runaway feed or loop before it becomes a bill. A spend limit on the API key is the second backstop. |
+| **Cost cannot run away** | Every call has an output cap, every step has an item cap, and a hard daily limit on classification calls (`DAILY_CLASSIFY_CAP`, default 5,000 — about three times the expected daily volume) stops a runaway feed or loop before it becomes a bill. A spend limit on the API key is the second backstop. |
 
 ## Security and data handling
 
