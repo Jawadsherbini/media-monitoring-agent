@@ -75,3 +75,9 @@
     label validation on classification, citation verification on drafts, and mandatory human
     approval before delivery. A hostile page can waste one classification call; it cannot change
     what reaches the Director General.
+
+20. Prompt caching was implemented and measured, then removed. The classification rulebook is
+    ~350 tokens; Haiku's minimum cacheable prefix is 2,048, so cache_control was accepted but
+    silently did nothing (0 cache reads over 10 calls). Shipping a no-op would have been
+    misleading. Caching becomes worthwhile if the prompt grows (e.g. few-shot examples from
+    the feedback loop), which is the point to re-test it.

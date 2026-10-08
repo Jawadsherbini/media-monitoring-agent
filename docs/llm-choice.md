@@ -15,9 +15,10 @@ Price was not the deciding factor — all three major vendors land within a few 
 this volume. Claude was the best fit for this task on four grounds: (1) how reliably the model
 obeys "use only the supplied items and cite each claim" — demonstrated in every test run,
 including declining to connect two stories without evidence; (2) two quality tiers behind one SDK
-and one key, so bulk and quality work cost what they should; (3) prompt caching for the fixed
-classification prompt; (4) a credible path to regional hosting through the hyperscalers if the
-client requires it.
+and one key, so bulk and quality work cost what they should; (3) prompt caching for the
+classification prompt once it grows past the model's minimum cacheable size (it is below that
+today); (4) a credible path to regional hosting through the hyperscalers if the client requires
+it.
 
 **Swapping providers.** `agent/llm.py` is the only file that creates an LLM client; classification
 and drafting import it from there. A provider abstraction (one function per provider behind the

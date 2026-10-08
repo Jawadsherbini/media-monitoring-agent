@@ -54,6 +54,7 @@ See a [complete generated briefing](docs/sample-briefing.md) (65 items, every ci
 | Concern | How it is handled |
 |---|---|
 | **Where the data lives** | n8n and the SQLite archive run inside the client's environment. The only outbound traffic is article text to the LLM API over HTTPS; nothing from the archive, the briefings or the approval decisions leaves. |
+| **Internal documents and correspondence** | When the directorate adds internal material, it is stored in the same archive inside the client's environment and tagged with an access level. Retrieval for briefings and Q&A filters by the requesting user's role before anything is sent to the model, so an analyst cannot surface a document they are not cleared to read, and nothing marked confidential is sent to a public LLM endpoint: those items are summarised only through a regional or in-house model. |
 | **Secrets** | API keys live in `.env`, which is git-ignored; `.env.example` holds placeholders only. The pipeline refuses to start with a placeholder key. |
 | **Access to the API** | Every endpoint except `/health` requires an API key, compared in constant time. n8n is the only caller. |
 | **Untrusted input** | Articles are treated as data, never as instructions: the classifier's output is validated against a fixed label set, every citation in a draft is checked against the supplied items, and a human approves before anything is sent. A page containing "ignore your instructions" cannot change a label, invent a source, or reach the Director General. |
@@ -70,7 +71,7 @@ The best fit for this job, chosen on three things that matter more than price at
 2. **Two tiers, one key.** Haiku handles 1,500 cheap classifications a day; Sonnet writes the one document that matters. Same SDK, same key.
 3. **A path to regional hosting** through the hyperscalers if the client needs data to stay in-Kingdom.
 
-Total LLM cost at 1,500 items/day: **≈ $33 / month** (≈ $19 with prompt caching). A comparison with OpenAI, Google and Gulf-hosted options, and how a client would switch provider, is in [docs/llm-choice.md](docs/llm-choice.md).
+Total LLM cost at 1,500 items/day: **≈ $33 / month** (prompt caching was tested and does not engage at this prompt size; see DECISIONS.md). A comparison with OpenAI, Google and Gulf-hosted options, and how a client would switch provider, is in [docs/llm-choice.md](docs/llm-choice.md).
 
 ---
 
@@ -93,6 +94,8 @@ python -m agent.ask "What has been written about visa changes this week and by w
 
 uvicorn api:app --port 8000          # leave running; n8n calls this
 ```
+
+Run `python -m pytest -q` to check the core logic (no API calls).
 
 Then in a second terminal: `npx n8n` (Safari users: `N8N_SECURE_COOKIE=false npx n8n`), open http://localhost:5678, and follow [docs/n8n-setup.md](docs/n8n-setup.md) to import the two workflows (about 5 minutes). Use `127.0.0.1`, not `localhost`, in n8n URLs.
 
@@ -121,6 +124,7 @@ Then in a second terminal: `npx n8n` (Safari users: `N8N_SECURE_COOKIE=false npx
 | `api.py` | FastAPI endpoints n8n calls — [docs/api.md](docs/api.md) |
 | `n8n/` | The two exported workflows (JSON) |
 | `eval/` | Hand-labelled sample, scoring script, results, token measurement |
+| `tests/` | Six fast unit tests of the pure logic (`python -m pytest -q`); no API calls |
 | `docs/` | [Architecture note](docs/architecture.md) (one page, [PDF](docs/architecture.pdf)) · [LLM choice](docs/llm-choice.md) · [n8n setup](docs/n8n-setup.md) · [API](docs/api.md) · samples · screenshots |
 | `DECISIONS.md` | Every design decision and its trade-off, in order |
 

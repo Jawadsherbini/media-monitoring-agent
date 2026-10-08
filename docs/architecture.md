@@ -38,11 +38,11 @@ every 10 min Schedule ──► ingest ──► classify ──► new high-ris
 
 ## Security and data residency
 
-n8n and the database run inside the client's environment; the only outbound traffic is article text to the LLM API over HTTPS. Secrets live in `.env`, never in code or Git, and every API call needs a key. Production adds HTTPS in front of n8n and the API, role-based access (analysts approve, DG office reads), a regional LLM endpoint if policy requires data to stay in-Kingdom, and an audit trail from the `briefings` table plus n8n execution history. Articles are treated as untrusted input: label validation, citation checks and human approval mean a hostile page cannot change what reaches the DG.
+n8n and the database run inside the client's environment; the only outbound traffic is article text to the LLM API over HTTPS. Secrets live in `.env`, never in code or Git, and every API call needs a key. Production adds HTTPS in front of n8n and the API, role-based access (analysts approve, DG office reads), a regional LLM endpoint if policy requires data to stay in-Kingdom, and an audit trail from the `briefings` table plus n8n execution history. Articles are treated as untrusted input: label validation, citation checks and human approval mean a hostile page cannot change what reaches the DG. Internal documents, when added, carry an access level; retrieval filters by the user's role before anything reaches the model, and confidential items are routed only to a regional or in-house model.
 
 ## Cost (1,500 items/day)
 
-≈ $33/month in LLM calls (classification ≈ $31 measured, briefing ≈ $2), ≈ $19 with prompt caching, plus a small VM for n8n. Against: 3 hours × 6 analysts every morning.
+≈ $33/month in LLM calls (classification ≈ $31 measured, briefing ≈ $2) (prompt caching tested; not applicable at this prompt size), plus a small VM for n8n. Against: 3 hours × 6 analysts every morning.
 
 ## Scope cuts (deliberate)
 
